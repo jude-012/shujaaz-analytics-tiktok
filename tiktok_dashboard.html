@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shujaaz Kenya — TikTok Analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{--red:#CC1F1F;--dark:#1A1A1A;--mid:#666;--border:#E8E8E8;--bg:#F7F7F7;--white:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--dark)}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{background:#000;color:#fff;font-weight:700;font-size:12px;letter-spacing:.06em;padding:4px 8px;border-radius:3px}
+.tiktok-logo{display:flex;align-items:center;gap:3px;font-size:13px;font-weight:700}
+.t1{color:#fe2c55}.t2{color:#25f4ee}.t3{color:#000}
+.updated{font-size:11px;color:#aaa}
+.main{max-width:1400px;margin:0 auto;padding:24px}
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+.mc{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;border-top:3px solid var(--dark)}
+.mc.red{border-top-color:var(--red)}
+.mc.teal{border-top-color:#25f4ee}
+.ml{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.mv{font-size:20px;font-weight:700;color:var(--dark)}
+.ms{font-size:10px;color:#bbb;margin-top:2px}
+.row2{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px}
+.ct{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:14px}
+.ct small{font-size:10px;font-weight:400;color:#aaa;margin-left:8px}
+.viral-banner{background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.viral-icon{font-size:24px}
+.viral-text{flex:1}
+.viral-title{font-size:13px;font-weight:600;color:#f57c00}
+.viral-desc{font-size:11px;color:#888;margin-top:2px}
+.heatmap{display:grid;grid-template-columns:repeat(24,1fr);gap:3px}
+.heat-cell{height:36px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:600;cursor:default;transition:transform .1s}
+.heat-cell:hover{transform:scale(1.15);z-index:10}
+.heat-labels{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin-top:4px}
+.heat-label{text-align:center;font-size:9px;color:#aaa}
+.best-time{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:10px 14px;margin-top:12px;font-size:12px;color:#2e7d32}
+.best-time strong{font-weight:600}
+.territory-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.territory-flag{font-size:16px;width:24px}
+.territory-name{font-size:12px;color:var(--dark);width:50px;flex-shrink:0}
+.territory-bar-bg{flex:1;height:8px;background:#f0f0f0;border-radius:4px}
+.territory-bar{height:8px;border-radius:4px;background:var(--red)}
+.territory-pct{font-size:11px;color:#aaa;width:40px;text-align:right;flex-shrink:0}
+.gender-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.gender-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.gender-label{font-size:12px;color:var(--dark);flex:1}
+.gender-pct{font-size:13px;font-weight:700;color:var(--dark)}
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.insight{background:#f8f9fa;border-radius:6px;padding:10px 12px}
+.insight-label{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.insight-value{font-size:13px;font-weight:600;color:var(--dark)}
+@media(max-width:900px){.metrics{grid-template-columns:repeat(3,1fr)}.row2,.row3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">
+    <div class="tiktok-logo"><span class="t1">Tik</span><span class="t2">Tok</span></div>
+    <div style="width:1px;height:16px;background:#e8e8e8;margin:0 6px"></div>
+    <span style="font-size:12px;color:#666">@shujaazkenya — Analytics</span>
+  </div>
+  <span class="updated" id="updatedAt">Loading...</span>
+</div>
+
+<div class="main" id="app">
+  <div style="text-align:center;padding:60px;color:#aaa">Loading analytics data...</div>
+</div>
+
+<script>
+const FLAGS = {KE:'🇰🇪',TZ:'🇹🇿',NG:'🇳🇬',SA:'🇸🇦',UG:'🇺🇬',QA:'🇶🇦',US:'🇺🇸',ZA:'🇿🇦',AE:'🇦🇪',GH:'🇬🇭',Others:'🌍'};
+const COUNTRY_NAMES = {KE:'Kenya',TZ:'Tanzania',NG:'Nigeria',SA:'Saudi Arabia',UG:'Uganda',QA:'Qatar',US:'USA',ZA:'South Africa',AE:'UAE',GH:'Ghana',Others:'Others'};
+const fmt = n => n>=1e6?(n/1e6).toFixed(1)+'M':n>=1000?(n/1000).toFixed(1)+'k':Number(n).toLocaleString();
+let D=null, charts={};
+
+function destroyChart(k){if(charts[k]){charts[k].destroy();delete charts[k];}}
+
+async function loadData(){
+  const r = await fetch('tiktok_data.json?_='+Date.now());
+  D = await r.json();
+  document.getElementById('updatedAt').textContent = 'Data: Apr 2025 – Apr 2026';
+  render();
+}
+
+function render(){
+  const t = D.totals;
+  const gained = t.followers_gained;
+  const engRate = t.views>0?((t.likes+t.shares+t.comments)/t.views*100).toFixed(2):0;
+  const avgDaily = Math.round(t.views/D.daily.length);
+  const peak = D.peak_day;
+
+  document.getElementById('app').innerHTML = `
+  <div class="viral-banner">
+    <div class="viral-icon">🔥</div>
+    <div class="viral-text">
+      <div class="viral-title">Viral spike: ${peak.date} — ${fmt(peak.views)} views in one day</div>
+      <div class="viral-desc">${fmt(peak.shares)} shares · ${fmt(peak.likes)} likes · ${fmt(peak.comments)} comments on peak day</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:20px;font-weight:700;color:#f57c00">${Math.round(peak.views/avgDaily)}×</div>
+      <div style="font-size:10px;color:#aaa">above daily avg</div>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="mc red"><div class="ml">Total views</div><div class="mv">${fmt(t.views)}</div><div class="ms">Apr 2025 – Apr 2026</div></div>
+    <div class="mc"><div class="ml">Total likes</div><div class="mv">${fmt(t.likes)}</div><div class="ms">${((t.likes/t.views)*100).toFixed(1)}% like rate</div></div>
+    <div class="mc"><div class="ml">Total shares</div><div class="mv">${fmt(t.shares)}</div><div class="ms">${((t.shares/t.views)*100).toFixed(1)}% share rate</div></div>
+    <div class="mc"><div class="ml">Comments</div><div class="mv">${fmt(t.comments)}</div><div class="ms">avg ${(t.comments/D.daily.length).toFixed(1)}/day</div></div>
+    <div class="mc teal"><div class="ml">Followers gained</div><div class="mv">+${fmt(gained)}</div><div class="ms">${fmt(t.followers_start)} → ${fmt(t.followers_end)}</div></div>
+    <div class="mc"><div class="ml">Engagement rate</div><div class="mv">${engRate}%</div><div class="ms">(likes+shares+comments)/views</div></div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="ct">Daily views <small>Apr 2025 – Apr 2026</small></div>
+      <div style="position:relative;height:240px"><canvas id="dailyChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">Monthly performance</div>
+      <div style="position:relative;height:240px"><canvas id="monthlyChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="row3">
+    <div class="card">
+      <div class="ct">Follower growth</div>
+      <div style="position:relative;height:200px"><canvas id="followerChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">Engagement breakdown</div>
+      <div style="position:relative;height:200px"><canvas id="engChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ct">Daily avg views vs shares</div>
+      <div style="position:relative;height:200px"><canvas id="vsChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="row2">
+    <div class="card">
+      <div class="ct">Best time to post <small>based on follower activity — EAT (UTC+3)</small></div>
+      <div class="heatmap" id="heatmap"></div>
+      <div class="heat-labels" id="heatLabels"></div>
+      <div class="best-time" id="bestTime"></div>
+    </div>
+    <div class="card">
+      <div class="ct">Audience</div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Gender</div>
+        ${[['Male','#1A1A1A',D.gender.Male],['Female','#CC1F1F',D.gender.Female],['Other','#aaa',D.gender.Other||0.01]].map(([label,color,pct])=>`
+        <div class="gender-row">
+          <div class="gender-dot" style="background:${color}"></div>
+          <div class="gender-label">${label}</div>
+          <div style="flex:2;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden">
+            <div style="width:${Math.round(pct*100)}%;height:100%;background:${color};border-radius:4px"></div>
+          </div>
+          <div class="gender-pct">${Math.round(pct*100)}%</div>
+        </div>`).join('')}
+      </div>
+      <div style="font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Top territories</div>
+      ${D.territories.map(t=>`
+      <div class="territory-row">
+        <div class="territory-flag">${FLAGS[t.country]||'🌍'}</div>
+        <div class="territory-name">${COUNTRY_NAMES[t.country]||t.country}</div>
+        <div class="territory-bar-bg"><div class="territory-bar" style="width:${Math.round(t.pct*100)}%"></div></div>
+        <div class="territory-pct">${Math.round(t.pct*100)}%</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+
+  renderDailyChart();
+  renderMonthlyChart();
+  renderFollowerChart();
+  renderEngChart();
+  renderVsChart();
+  renderHeatmap();
+}
+
+function renderDailyChart(){
+  destroyChart('daily');
+  const labels = D.daily.map(r=>r.date);
+  const views  = D.daily.map(r=>r.views);
+  const shares = D.daily.map(r=>r.shares);
+  charts.daily = new Chart(document.getElementById('dailyChart'),{
+    type:'line',
+    data:{labels,datasets:[
+      {label:'Views',data:views,borderColor:'#CC1F1F',backgroundColor:'rgba(204,31,31,.08)',fill:true,pointRadius:0,tension:.3,borderWidth:1.5,yAxisID:'y'},
+      {label:'Shares',data:shares,borderColor:'#25f4ee',backgroundColor:'transparent',fill:false,pointRadius:0,tension:.3,borderWidth:1.5,yAxisID:'y1'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{autoSkip:true,maxTicksLimit:8,font:{size:9}},grid:{display:false}},
+        y:{position:'left',ticks:{callback:v=>fmt(v),font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}},
+        y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:v=>fmt(v),font:{size:9}}}
+      }}
+  });
+}
+
+function renderMonthlyChart(){
+  destroyChart('monthly');
+  const months = Object.keys(D.monthly);
+  const labels = months.map(m=>m.slice(0,7));
+  const views  = months.map(m=>D.monthly[m].views);
+  const shares = months.map(m=>D.monthly[m].shares);
+  charts.monthly = new Chart(document.getElementById('monthlyChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Views',data:views,backgroundColor:'#CC1F1F',borderRadius:3,yAxisID:'y'},
+      {label:'Shares',data:shares,backgroundColor:'#25f4ee',borderRadius:3,yAxisID:'y1'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:9}},grid:{display:false}},
+        y:{position:'left',ticks:{callback:v=>fmt(v),font:{size:9}}},
+        y1:{position:'right',grid:{drawOnChartArea:false},ticks:{callback:v=>fmt(v),font:{size:9}}}
+      }}
+  });
+}
+
+function renderFollowerChart(){
+  destroyChart('follower');
+  const labels = D.followers.filter((_,i)=>i%7===0).map(r=>r.date);
+  const vals   = D.followers.filter((_,i)=>i%7===0).map(r=>r.followers);
+  charts.follower = new Chart(document.getElementById('followerChart'),{
+    type:'line',
+    data:{labels,datasets:[{data:vals,borderColor:'#1A1A1A',backgroundColor:'rgba(0,0,0,.05)',fill:true,pointRadius:0,tension:.3,borderWidth:1.5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{autoSkip:true,maxTicksLimit:6,font:{size:9}},grid:{display:false}},y:{ticks:{callback:v=>fmt(v),font:{size:9}}}}}
+  });
+}
+
+function renderEngChart(){
+  destroyChart('eng');
+  const t = D.totals;
+  charts.eng = new Chart(document.getElementById('engChart'),{
+    type:'doughnut',
+    data:{
+      labels:['Likes','Shares','Comments'],
+      datasets:[{data:[t.likes,t.shares,t.comments],backgroundColor:['#CC1F1F','#25f4ee','#1A1A1A'],borderWidth:2,borderColor:'#fff'}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}}}
+  });
+}
+
+function renderVsChart(){
+  destroyChart('vs');
+  const months = Object.keys(D.monthly);
+  const avgViews  = months.map(m=>Math.round(D.monthly[m].views/D.monthly[m].days));
+  const avgShares = months.map(m=>Math.round(D.monthly[m].shares/D.monthly[m].days));
+  charts.vs = new Chart(document.getElementById('vsChart'),{
+    type:'bar',
+    data:{labels:months.map(m=>m.slice(2)),datasets:[
+      {label:'Avg views/day',data:avgViews,backgroundColor:'rgba(204,31,31,.7)',borderRadius:2,yAxisID:'y'},
+      {label:'Avg shares/day',data:avgShares,backgroundColor:'rgba(37,244,238,.8)',borderRadius:2,yAxisID:'y1'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:9}},grid:{display:false}},
+        y:{position:'left',ticks:{callback:v=>fmt(v),font:{size:9}}},
+        y1:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:9}}}}}
+  });
+}
+
+function renderHeatmap(){
+  const hourly = D.hourly_avg;
+  const maxVal = Math.max(...Object.values(hourly));
+  const minVal = Math.min(...Object.values(hourly));
+  const hm = document.getElementById('heatmap');
+  const hl = document.getElementById('heatLabels');
+  let hmHTML='', hlHTML='';
+  for(let h=0;h<24;h++){
+    const val = hourly[String(h)] || 0;
+    const intensity = (val-minVal)/(maxVal-minVal);
+    const r = Math.round(204*intensity);
+    const g = Math.round(31*intensity);
+    const b = Math.round(31*intensity);
+    const bg = val>0 ? `rgb(${Math.round(30+intensity*174)},${Math.round(30+intensity*10)},${Math.round(30+intensity*10)})` : '#f5f5f5';
+    const textColor = intensity > 0.5 ? '#fff' : '#999';
+    const label = h===0?'12am':h<12?`${h}am`:h===12?'12pm':`${h-12}pm`;
+    hmHTML += `<div class="heat-cell" style="background:${bg};color:${textColor}" title="${label}: ${val.toLocaleString()} active followers">${val>=6000?label:''}</div>`;
+    hlHTML += `<div class="heat-label">${h%3===0?label:''}</div>`;
+  }
+  hm.innerHTML=hmHTML;
+  hl.innerHTML=hlHTML;
+
+  // Best posting times
+  const sorted = Object.entries(hourly).sort((a,b)=>b[1]-a[1]);
+  const top3 = sorted.slice(0,3).map(([h])=>{
+    const hr=parseInt(h);
+    return hr===0?'12am':hr<12?`${hr}am`:hr===12?'12pm':`${hr-12}pm`;
+  });
+  document.getElementById('bestTime').innerHTML = `<strong>Best times to post (EAT):</strong> ${top3.join(', ')} — when your followers are most active. Avoid posting before 6am or between 1am–5am.`;
+}
+
+loadData().catch(e=>{
+  document.getElementById('app').innerHTML=`<div style="text-align:center;padding:60px;color:#CC1F1F">
+    Could not load tiktok_data.json<br><small>${e.message}</small><br><br>
+    Make sure both files are in the same folder and open via <strong>python -m http.server 8000</strong>
+  </div>`;
+});
+</script>
+</body>
+</html>

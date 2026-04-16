@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shujaaz Kenya — YouTube Analytics</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root{--red:#CC1F1F;--dark:#1A1A1A;--mid:#666;--border:#E8E8E8;--bg:#F7F7F7;--white:#fff;--card-shadow:0 1px 4px rgba(0,0,0,.07)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+  
+  /* Top bar */
+  .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{background:var(--red);color:#fff;font-weight:700;font-size:12px;letter-spacing:.06em;padding:4px 8px;border-radius:3px}
+  .logo-inc{font-size:11px;color:#bbb}
+  .brand-sep{width:1px;height:16px;background:var(--border);margin:0 6px}
+  .brand-title{font-size:12px;color:var(--mid)}
+  .topbar-right{display:flex;align-items:center;gap:12px}
+  .updated{font-size:11px;color:#aaa}
+  .refresh-btn{padding:5px 14px;border-radius:5px;border:1px solid var(--border);background:var(--white);color:var(--mid);font-size:11px;cursor:pointer;transition:all .15s}
+  .refresh-btn:hover{border-color:var(--dark);color:var(--dark)}
+
+  /* Layout */
+  .main{max-width:1400px;margin:0 auto;padding:24px}
+  
+  /* Filters bar */
+  .filter-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+  .filter-group{display:flex;gap:5px}
+  .pill{padding:4px 13px;border-radius:20px;border:1px solid var(--border);background:var(--white);color:var(--mid);font-size:12px;cursor:pointer;transition:all .15s}
+  .pill.active{background:var(--dark);border-color:var(--dark);color:#fff}
+  .date-group{display:flex;gap:5px;align-items:center}
+  .date-group label{font-size:11px;color:#aaa}
+  .date-group input{padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:11px;color:var(--dark)}
+
+  /* Metrics */
+  .metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+  .metric-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px 18px;border-top:3px solid var(--red)}
+  .metric-label{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .metric-value{font-size:26px;font-weight:700;color:var(--dark)}
+  .metric-sub{font-size:10px;color:#bbb;margin-top:3px}
+
+  /* Cards */
+  .card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px}
+  .card-title{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:14px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+  .mb{margin-bottom:14px}
+
+  /* Legend */
+  .legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px;font-size:11px;color:var(--mid)}
+  .legend-item{display:flex;align-items:center;gap:4px}
+  .legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;color:#aaa;font-weight:500;padding:6px 8px;border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+  td{padding:8px 8px;border-bottom:1px solid var(--border);color:var(--dark);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover td{background:#fafafa}
+  .thumb{width:52px;height:34px;object-fit:cover;border-radius:4px;display:block}
+  .vtitle{color:#1a73e8;text-decoration:none;font-size:12px;font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;max-width:300px}
+  .vtitle:hover{text-decoration:underline}
+  .badge{display:inline-block;padding:2px 7px;border-radius:3px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+  .badge-video{background:#e8f0fe;color:#1a56db}
+  .badge-short{background:#fce8e8;color:var(--red)}
+  .bar-bg{background:#f0f0f0;border-radius:2px;height:4px;margin-top:3px;min-width:60px}
+  .bar-fill{height:4px;border-radius:2px;background:var(--red)}
+  .camp-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+
+  /* Search */
+  .search-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .search-input{flex:1;padding:7px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--dark);outline:none}
+  .search-input:focus{border-color:#aaa}
+  .count-label{font-size:11px;color:#aaa;white-space:nowrap}
+
+  /* Loading / error */
+  .loading{text-align:center;padding:60px;color:#aaa;font-size:14px}
+  .error{text-align:center;padding:40px;color:var(--red);font-size:13px}
+
+  @media(max-width:900px){
+    .metrics{grid-template-columns:repeat(2,1fr)}
+    .row2,.row3{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <span class="logo">SHUJAAZ</span>
+    <span class="logo-inc">INC.</span>
+    <div class="brand-sep"></div>
+    <span class="brand-title">YouTube Analytics</span>
+  </div>
+  <div class="topbar-right">
+    <span class="updated" id="updatedAt">Loading...</span>
+    <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="main" id="app">
+  <div class="loading">Loading analytics data...</div>
+</div>
+
+<script>
+const CAMP_COLORS = {
+  'Shujaaz TV':        '#CC1F1F',
+  'ShujaazSTRA':       '#E67E22',
+  'TukoOn':            '#F39C12',
+  'Free2Choose':       '#27AE60',
+  'GBV Awareness':     '#8E44AD',
+  'MTV Shuga':         '#2980B9',
+  'MicYetu':           '#16A085',
+  'Financial Fitness': '#2ECC71',
+  'Uncategorised':     '#95A5A6',
+};
+const TYPE_COLORS = {'video':'#3266ad','short':'#CC1F1F'};
+let RAW = null, charts = {}, activeType = 'all', searchQ = '', dateFrom = '', dateTo = '';
+
+const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(1)+'k' : Number(n).toLocaleString();
+const pct = (a,b) => b > 0 ? (a/b*100).toFixed(1)+'%' : '0%';
+
+async function loadData() {
+  try {
+    document.getElementById('updatedAt').textContent = 'Refreshing...';
+    const r = await fetch('shujaaz_videos.json?_=' + Date.now());
+    if (!r.ok) throw new Error('Could not load shujaaz_videos.json');
+    RAW = await r.json();
+    document.getElementById('updatedAt').textContent = 'Last updated: ' + (RAW.updated_at || 'unknown');
+    render();
+  } catch(e) {
+    document.getElementById('app').innerHTML = `<div class="error">
+      Could not load data.<br><small>${e.message}</small><br><br>
+      Make sure <strong>shujaaz_videos.json</strong> is in the same folder as this HTML file.
+    </div>`;
+  }
+}
+
+function getFiltered() {
+  let vids = RAW.allVideos || [];
+  if (activeType !== 'all') vids = vids.filter(v => v.type === activeType);
+  if (dateFrom) vids = vids.filter(v => v.published_at >= dateFrom);
+  if (dateTo)   vids = vids.filter(v => v.published_at <= dateTo);
+  return vids;
+}
+
+function getSearched(vids) {
+  if (!searchQ) return vids;
+  const q = searchQ.toLowerCase();
+  return vids.filter(v => v.title.toLowerCase().includes(q) || v.campaign.toLowerCase().includes(q));
+}
+
+function buildStats(vids) {
+  return {
+    total:    vids.length,
+    views:    vids.reduce((s,v)=>s+v.views,0),
+    likes:    vids.reduce((s,v)=>s+v.likes,0),
+    comments: vids.reduce((s,v)=>s+v.comments,0),
+  };
+}
+
+function destroyChart(key) {
+  if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+
+function render() {
+  const vids = getFiltered();
+  const s = buildStats(vids);
+  const avgViews = s.total > 0 ? Math.round(s.views/s.total) : 0;
+  const engRate  = s.views > 0 ? ((s.likes+s.comments)/s.views*100).toFixed(2) : 0;
+
+  // Monthly from filtered
+  const monthly = {};
+  vids.forEach(v => {
+    const m = v.published_at.slice(0,7);
+    if (!monthly[m]) monthly[m] = {uploads:0,views:0};
+    monthly[m].uploads++; monthly[m].views += v.views;
+  });
+
+  // Campaigns from filtered
+  const camps = {};
+  vids.forEach(v => {
+    if (!camps[v.campaign]) camps[v.campaign] = {videos:0,views:0,likes:0,comments:0};
+    camps[v.campaign].videos++; camps[v.campaign].views += v.views;
+    camps[v.campaign].likes += v.likes; camps[v.campaign].comments += v.comments;
+  });
+
+  // Types
+  const types = {};
+  vids.forEach(v => {
+    if (!types[v.type]) types[v.type] = {count:0,views:0};
+    types[v.type].count++; types[v.type].views += v.views;
+  });
+
+  const top15 = [...vids].sort((a,b)=>b.views-a.views).slice(0,15);
+  const maxV = top15.length ? top15[0].views : 1;
+
+  document.getElementById('app').innerHTML = `
+  <div class="filter-bar">
+    <div class="filter-group" id="typeFilters">
+      <span class="pill ${activeType==='all'?'active':''}" data-f="all">All content</span>
+      <span class="pill ${activeType==='video'?'active':''}" data-f="video">Videos only</span>
+      <span class="pill ${activeType==='short'?'active':''}" data-f="short">Shorts only</span>
+    </div>
+    <div class="date-group">
+      <label>From</label>
+      <input type="date" id="dateFrom" value="${dateFrom}" onchange="dateFrom=this.value;render()">
+      <label>To</label>
+      <input type="date" id="dateTo" value="${dateTo}" onchange="dateTo=this.value;render()">
+      <span class="pill" onclick="dateFrom='';dateTo='';document.getElementById('dateFrom').value='';document.getElementById('dateTo').value='';render()">Clear</span>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-label">Total videos</div>
+      <div class="metric-value">${s.total.toLocaleString()}</div>
+      <div class="metric-sub">${types.video?.count||0} videos · ${types.short?.count||0} shorts</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total views</div>
+      <div class="metric-value">${fmt(s.views)}</div>
+      <div class="metric-sub">all time</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Avg views / video</div>
+      <div class="metric-value">${fmt(avgViews)}</div>
+      <div class="metric-sub">across filtered content</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total likes</div>
+      <div class="metric-value">${fmt(s.likes)}</div>
+      <div class="metric-sub">${pct(s.likes,s.views)} like rate</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Engagement rate</div>
+      <div class="metric-value">${engRate}%</div>
+      <div class="metric-sub">(likes + comments) / views</div>
+    </div>
+  </div>
+
+  <div class="row2 mb">
+    <div class="card">
+      <div class="card-title">Monthly uploads &amp; views</div>
+      <div class="legend">
+        <span class="legend-item"><span class="legend-dot" style="background:var(--red)"></span>Uploads (left)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f5a623"></span>Views (right)</span>
+      </div>
+      <div style="position:relative;height:220px"><canvas id="monthChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Views by campaign</div>
+      <div class="legend" id="campLegend"></div>
+      <div style="position:relative;height:220px"><canvas id="campChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="row3 mb">
+    <div class="card">
+      <div class="card-title">Content type split</div>
+      <div class="legend" id="typeLegend"></div>
+      <div style="position:relative;height:180px"><canvas id="typeChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Engagement rate by type</div>
+      <div style="position:relative;height:180px"><canvas id="engChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Top campaigns by video count</div>
+      <div style="position:relative;height:180px"><canvas id="campCountChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">All videos</div>
+    <div class="search-row">
+      <input class="search-input" id="searchInput" type="text" placeholder="Search titles or campaigns..." value="${searchQ}" oninput="searchQ=this.value;renderTable(getSearched(getFiltered()))">
+      <span class="count-label" id="tableCount"></span>
+    </div>
+    <table>
+      <thead><tr>
+        <th></th><th>Title</th><th>Type</th><th>Campaign</th>
+        <th>Date</th><th>Views</th><th>Likes</th><th>Comments</th>
+      </tr></thead>
+      <tbody id="videoTable"></tbody>
+    </table>
+    <div id="paginationBar" style="display:flex;justify-content:center;gap:6px;margin-top:14px;font-size:11px;color:var(--mid)"></div>
+  </div>`;
+
+  document.getElementById('typeFilters').addEventListener('click', e => {
+    const p = e.target.closest('.pill'); if (!p || !p.dataset.f) return;
+    activeType = p.dataset.f; render();
+  });
+
+  renderMonthChart(monthly);
+  renderCampChart(camps);
+  renderTypeChart(types, s.views);
+  renderEngChart(types, s);
+  renderCampCountChart(camps);
+  renderTable(getSearched(vids));
+}
+
+let currentPage = 1;
+const PAGE_SIZE = 50;
+
+function renderTable(vids) {
+  const total = vids.length;
+  const pages = Math.max(1, Math.ceil(total/PAGE_SIZE));
+  currentPage = Math.min(currentPage, pages);
+  const slice = vids.slice((currentPage-1)*PAGE_SIZE, currentPage*PAGE_SIZE);
+  const maxV = vids.length ? Math.max(...vids.map(v=>v.views)) : 1;
+
+  document.getElementById('tableCount').textContent = `${total.toLocaleString()} videos`;
+  document.getElementById('videoTable').innerHTML = slice.map(v => `
+    <tr>
+      <td><img class="thumb" src="${v.thumbnail}" alt="" loading="lazy" onerror="this.style.display='none'"></td>
+      <td><a class="vtitle" href="${v.url}" target="_blank" rel="noopener">${v.title}</a></td>
+      <td><span class="badge badge-${v.type}">${v.type}</span></td>
+      <td><span class="camp-dot" style="background:${CAMP_COLORS[v.campaign]||'#95A5A6'}"></span>${v.campaign}</td>
+      <td style="color:#aaa;white-space:nowrap">${v.published_at}</td>
+      <td>
+        <div style="font-weight:600;font-size:12px">${fmt(v.views)}</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:${Math.round(v.views/maxV*100)}%"></div></div>
+      </td>
+      <td>${fmt(v.likes)}</td>
+      <td>${fmt(v.comments)}</td>
+    </tr>`).join('');
+
+  // Pagination
+  const pb = document.getElementById('paginationBar');
+  if (pages <= 1) { pb.innerHTML=''; return; }
+  let btns = '';
+  for (let p=1; p<=pages; p++) {
+    if (p===1 || p===pages || Math.abs(p-currentPage)<=2) {
+      btns += `<button onclick="goPage(${p})" style="padding:3px 9px;border-radius:4px;border:1px solid ${p===currentPage?'var(--dark)':'var(--border)'};background:${p===currentPage?'var(--dark)':'var(--white)'};color:${p===currentPage?'#fff':'var(--mid)'};cursor:pointer;font-size:11px">${p}</button>`;
+    } else if (Math.abs(p-currentPage)===3) {
+      btns += `<span style="color:#aaa">…</span>`;
+    }
+  }
+  pb.innerHTML = btns;
+}
+
+function goPage(p) { currentPage=p; renderTable(getSearched(getFiltered())); window.scrollTo(0,document.body.scrollHeight); }
+
+function renderMonthChart(monthly) {
+  destroyChart('month');
+  const keys = Object.keys(monthly).sort();
+  charts.month = new Chart(document.getElementById('monthChart'), {
+    type:'bar',
+    data:{labels:keys.map(k=>k.slice(2)),datasets:[
+      {label:'Uploads',data:keys.map(k=>monthly[k].uploads),backgroundColor:'#CC1F1F',yAxisID:'y',borderRadius:2,barPercentage:.7},
+      {label:'Views',data:keys.map(k=>monthly[k].views),type:'line',borderColor:'#f5a623',backgroundColor:'transparent',yAxisID:'y1',pointRadius:2,tension:.3,borderWidth:1.5}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{font:{size:9},autoSkip:true,maxTicksLimit:14},grid:{display:false}},
+        y:{position:'left',ticks:{font:{size:9}},grid:{color:'rgba(0,0,0,.04)'}},
+        y1:{position:'right',grid:{drawOnChartArea:false},ticks:{font:{size:9},callback:v=>fmt(v)}}
+      }}
+  });
+}
+
+function renderCampChart(camps) {
+  destroyChart('camp');
+  const entries = Object.entries(camps).sort((a,b)=>b[1].views-a[1].views);
+  const labs = entries.map(([k])=>k), vals = entries.map(([,v])=>v.views);
+  const cols = labs.map(l=>CAMP_COLORS[l]||'#95A5A6');
+  document.getElementById('campLegend').innerHTML = labs.map((l,i)=>
+    `<span class="legend-item"><span class="legend-dot" style="background:${cols[i]}"></span>${l}: ${fmt(vals[i])}</span>`).join('');
+  charts.camp = new Chart(document.getElementById('campChart'), {
+    type:'doughnut',
+    data:{labels:labs,datasets:[{data:vals,backgroundColor:cols,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${fmt(c.raw)} views`}}}}
+  });
+}
+
+function renderTypeChart(types, totalViews) {
+  destroyChart('type');
+  const labs=['Videos','Shorts'], vals=[types.video?.count||0,types.short?.count||0], cols=['#3266ad','#CC1F1F'];
+  document.getElementById('typeLegend').innerHTML = labs.map((l,i)=>
+    `<span class="legend-item"><span class="legend-dot" style="background:${cols[i]}"></span>${l}: ${vals[i]}</span>`).join('');
+  charts.type = new Chart(document.getElementById('typeChart'), {
+    type:'doughnut',
+    data:{labels:labs,datasets:[{data:vals,backgroundColor:cols,borderWidth:2,borderColor:'#fff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw} (${pct(c.raw,vals[0]+vals[1])})`}}}}
+  });
+}
+
+function renderEngChart(types, s) {
+  destroyChart('eng');
+  const vC=types.video?.count||1, sC=types.short?.count||1, tot=s.total||1;
+  const vEng=types.video?.views>0?+((s.likes*vC/tot+s.comments*vC/tot)/types.video.views*100).toFixed(2):0;
+  const sEng=types.short?.views>0?+((s.likes*sC/tot+s.comments*sC/tot)/types.short.views*100).toFixed(2):0;
+  charts.eng = new Chart(document.getElementById('engChart'), {
+    type:'bar',
+    data:{labels:['Videos','Shorts'],datasets:[{data:[vEng,sEng],backgroundColor:['#3266ad','#CC1F1F'],borderRadius:4,barPercentage:.5}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.raw}%`}}},
+      scales:{x:{ticks:{callback:v=>v+'%',font:{size:10}}},y:{ticks:{font:{size:11}}}}}
+  });
+}
+
+function renderCampCountChart(camps) {
+  destroyChart('campCount');
+  const entries = Object.entries(camps).sort((a,b)=>b[1].videos-a[1].videos).slice(0,8);
+  charts.campCount = new Chart(document.getElementById('campCountChart'), {
+    type:'bar',
+    data:{
+      labels:entries.map(([k])=>k),
+      datasets:[{data:entries.map(([,v])=>v.videos),backgroundColor:entries.map(([k])=>CAMP_COLORS[k]||'#95A5A6'),borderRadius:3,barPercentage:.6}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},
+      scales:{x:{ticks:{font:{size:10}}},y:{ticks:{font:{size:10}}}}}
+  });
+}
+
+loadData();
+</script>
+</body>
+</html>
